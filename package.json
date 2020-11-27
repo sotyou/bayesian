@@ -1,0 +1,19 @@
+{
+  "name": "y",
+  "version": "1.0.0",
+  "description": "bayesian for quant",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "bayesian",
+    "bitcoin"
+  ],
+  "author": "su chang",
+  "license": "ISC",
+  "dependencies": {
+    "csvtojson": "^2.0.10",
+    "node-kmeans": "^1.1.9"
+  }
+}
