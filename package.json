@@ -16,6 +16,7 @@
   "dependencies": {
     "csvtojson": "^2.0.10",
     "mathjs": "^8.0.1",
+    "ml-regression": "^5.0.0",
     "node-kmeans": "^1.1.9"
   },
   "devDependencies": {
