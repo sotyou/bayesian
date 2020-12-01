@@ -1,7 +1,7 @@
 'use strict'
 
 const kmeans = require('node-kmeans')
-const { norm, similarity, regularize } = require('../utils/calculate')
+const { norm, similarity, regularize, stddev } = require('../utils/calculate')
 const { runBatchWithCount } = require('../utils/batch_work_wapper')
 
 /**
@@ -143,4 +143,100 @@ function predictDpi(prices, v_bid, v_ask, s1, s2, s3, ...w) {
     })
 }
 
-module.exports = { generateTimeSeries, kmeansClusters, predictDpiByPoission, predictDpiBySimilarity, linearRegressionVars, predictDpi, regularizeMatrix }
+ function backtest(asks, bids, dps, threshold) {
+    let   bank_balance = 0,
+            position = 0,
+            win_count = 0,
+            lose_count = 0,
+            win_amount = 0,
+            lose_amount = 0,
+            temp_price = 0,
+            counter = 0,
+            profit = []
+    
+    for (let i = 720; i < asks.length - 1; i ++) {
+        
+        if (dps[i - 720] >= threshold && position <= 0) {
+            position += 1
+            if (position == 1) {
+                temp_price = asks[i]
+            }
+            if (position == 0) {
+                counter += 1
+                if (temp_price > asks[i]) {
+                    win_count += 1
+                    win_amount += -asks[i] + temp_price
+                }
+                if (temp_price < asks[i]) {
+                    lose_count += 1
+                    lose_amount += asks[i] - temp_price
+                }
+                profit.push((-asks[i] + temp_price) / temp_price)
+            }
+            bank_balance -= asks[i]
+        }
+        if (dps[i - 720] <= -threshold && position>= 0) {
+            position -= 1
+            if (position == -1) {
+                temp_price = bids[i]
+            }
+            if (position == 0) {
+                counter += 1
+                if (temp_price < bids[i]) {
+                    win_count += 1
+                    win_amount += bids[i] - temp_price
+                }
+                if (temp_price > bids[i]) {
+                    lose_count += 1
+                    lose_amount += -bids[i] + temp_price
+                }
+                profit.push((bids[i] - temp_price) / temp_price)
+            }
+            bank_balance += bids[i]
+        }
+    }
+
+    if (position == 1) {
+        if (temp_price < bids[bids.length - 1]) {
+            win_amount += bids[bids.length - 1] - temp_price
+            win_count += 1
+            profit.push((bids[bids.length - 1] - temp_price) / temp_price)
+        }
+        if (temp_price > bids[bids.length - 1]) {
+            lose_amount += -bids[bids.length - 1] + temp_price
+            lose_count += 1
+            profit.push((bids[bids.length - 1] - temp_price) / temp_price)
+        }
+        bank_balance += bids[bids.length - 1]
+        counter += 1
+    }
+    if (position == -1) {
+        if (temp_price > asks[asks.length - 1]) {
+            win_amount += -asks[asks.length - 1] + temp_price
+            win_count += 1
+            profit.push((-asks[asks.length - 1] + temp_price) / temp_price)
+        }
+        if (temp_price < asks[asks.length - 1]) {
+            lose_amount += asks[asks.length - 1] - temp_price
+            lose_count += 1
+            profit.push((-asks[asks.length - 1] + temp_price) / temp_price)
+        }
+        bank_balance -= asks[asks.length - 1]
+        counter += 1
+    }
+    const   win_ratio = win_count / (win_count + lose_count),
+            winloss_ratio = (win_amount / win_count) / (lose_amount / lose_count),
+            avg_profit = profit.reduce((acc, val) => acc + val)/profit.length,
+            std_profit = stddev(profit),
+            sharp_ratio = avg_profit / std_profit
+
+    return {
+        win_ratio: win_ratio,
+        winloss_ratio: winloss_ratio,
+        sharp_ratio: sharp_ratio,
+        bank_balance: bank_balance,
+        counter: counter
+    }
+ }
+
+module.exports = { generateTimeSeries, kmeansClusters, predictDpiByPoission, predictDpiBySimilarity, linearRegressionVars, predictDpi, regularizeMatrix, backtest }

@@ -1,6 +1,6 @@
 ﻿'use strict'
 const { parentPort } = require('worker_threads')
-const { predictDpiByPoission } = require('../bayesian_calculate')
+const { predictDpiByPoission, predictDpiBySimilarity } = require('../bayesian_calculate')
 
 parentPort.on("message", msg => {
     const {tag, data} = {...msg}

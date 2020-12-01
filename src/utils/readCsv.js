@@ -13,6 +13,11 @@ function readbyline({interval, filePath, delimiter=","}, ...titles) {
                 if (counter%interval == 0) {
                     const json = JSON.parse(data)
                     for (let key in json) {
+                        if (json[key] == 0) {
+                            return
+                        }
+                    }
+                    for (let key in json) {
                         if (map.has(key)) {
                             map.get(key).push(parseFloat(json[key]))
                         }

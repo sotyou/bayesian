@@ -2,13 +2,13 @@
 
 const { readbyline } = require('./src/utils/readCsv')
 const { split } = require('./src/utils/calculate')
-const { generateTimeSeries, regularizeMatrix, linearRegressionVars, predictDpi } = require('./src/core/bayesian_calculate')
+const { generateTimeSeries, regularizeMatrix, linearRegressionVars, predictDpi, backtest } = require('./src/core/bayesian_calculate')
 const { MultivariateLinearRegression } = require('ml-regression')
 const { runBatch } = require('./src/utils/batch_work_wapper')
 
 const runApp = async () => {
     const   map = await readbyline({interval: 10, filePath: "data/bf_all_1s.csv"}, "price","bid_price","ask_price","v_bid","v_ask"),
-
+            time = Date.now(),
             prices = map.get("price"), 
             p_bid = map.get("bid_price"),   
             p_ask = map.get("ask_price"), 
@@ -35,8 +35,13 @@ const runApp = async () => {
 
             wMatrix = new MultivariateLinearRegression(X, Y).weights,
         
-            dpi = await predictDpi(price3, v_bid3, v_ask3, s1, s2, s3, wMatrix[0][0], wMatrix[1][0], wMatrix[2][0], wMatrix[3][0], wMatrix[4][0])
+            dps = await predictDpi(price3, v_bid3, v_ask3, s1, s2, s3, wMatrix[0][0], wMatrix[1][0], wMatrix[2][0], wMatrix[3][0], wMatrix[4][0]),
+            
+            result = backtest(p_ask3, p_bid3, dps, 100)
 
+            console.log(result)
+            console.log("time : " + (Date.now() - time)/60000 + "mins")
+            process.exit()
 }
 
 runApp()
